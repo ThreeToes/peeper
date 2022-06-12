@@ -67,8 +67,9 @@ func main() {
 			rw.Write(body)
 		})
 	}
-	log.Println("binding to port 9090")
-	if err := http.ListenAndServe(":9090", mux); err != nil {
+
+	log.Printf("binding to %s:%d", conf.Network.BindInterface, conf.Network.BindPort)
+	if err := http.ListenAndServe(fmt.Sprintf("%s:%d", conf.Network.BindInterface, conf.Network.BindPort), mux); err != nil {
 		log.Printf("error while serving: %v", err)
 	}
 }

@@ -1,3 +1,7 @@
+[network]
+bind_interface = "0.0.0.0"
+bind_port = 9090
+
 [endpoints]
 [endpoints.cats]
 local_path = "/"
