@@ -4,17 +4,16 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"peeper/internal/config"
 
 	"github.com/BurntSushi/toml"
+	"github.com/sirupsen/logrus"
 )
-
-const downstream = "https://cat-fact.herokuapp.com/facts"
 
 type opts struct {
 	ConfigFile *string
+	LogFormat  *string
 }
 
 func (o *opts) verify() error {
@@ -27,11 +26,15 @@ func (o *opts) verify() error {
 func main() {
 	opts, err := parseOpts()
 	if err != nil {
-		log.Fatalf("error parsing command line options: %v", err)
+		logrus.Fatalf("error parsing command line options: %v", err)
 	}
 
 	if err := opts.verify(); err != nil {
-		log.Fatalf("error parsing command line options: %v", err)
+		logrus.Fatalf("error parsing command line options: %v", err)
+	}
+
+	if *opts.LogFormat == "json" {
+		logrus.SetFormatter(&logrus.JSONFormatter{})
 	}
 
 	var conf config.AppOptions
@@ -39,13 +42,13 @@ func main() {
 	_, err = toml.DecodeFile(*opts.ConfigFile, &conf)
 
 	if err != nil {
-		log.Fatalf("could not decode config file: %v", err)
+		logrus.Fatalf("could not decode config file: %v", err)
 	}
 
 	mux := http.NewServeMux()
 
 	for k, v := range conf.Endpoints {
-		log.Printf("Registering endpoint %s", k)
+		logrus.Infof("Registering endpoint %s", k)
 		mux.HandleFunc(v.LocalPath, func(rw http.ResponseWriter, req *http.Request) {
 			forwardedReq, err := http.NewRequest(v.RemoteMethod, v.RemotePath, req.Body)
 
@@ -68,15 +71,16 @@ func main() {
 		})
 	}
 
-	log.Printf("binding to %s:%d", conf.Network.BindInterface, conf.Network.BindPort)
+	logrus.Infof("binding to %s:%d", conf.Network.BindInterface, conf.Network.BindPort)
 	if err := http.ListenAndServe(fmt.Sprintf("%s:%d", conf.Network.BindInterface, conf.Network.BindPort), mux); err != nil {
-		log.Printf("error while serving: %v", err)
+		logrus.Infof("error while serving: %v", err)
 	}
 }
 
 func parseOpts() (*opts, error) {
 	var options opts
 	options.ConfigFile = flag.String("config", "", "Path to TOML config file")
+	options.LogFormat = flag.String("logformat", "text", "The log format to use. Supported formats: json, text")
 
 	flag.Parse()
 
