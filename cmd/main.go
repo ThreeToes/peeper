@@ -8,6 +8,7 @@ import (
 	"peeper/internal/config"
 
 	"github.com/BurntSushi/toml"
+	"github.com/gin-gonic/gin"
 	"github.com/sirupsen/logrus"
 )
 
@@ -45,34 +46,35 @@ func main() {
 		logrus.Fatalf("could not decode config file: %v", err)
 	}
 
-	mux := http.NewServeMux()
+	gin.SetMode(gin.ReleaseMode)
+
+	svr := gin.New()
+	svr.Use(gin.Recovery())
 
 	for k, v := range conf.Endpoints {
 		logrus.Infof("Registering endpoint %s", k)
-		mux.HandleFunc(v.LocalPath, func(rw http.ResponseWriter, req *http.Request) {
-			forwardedReq, err := http.NewRequest(v.RemoteMethod, v.RemotePath, req.Body)
+		svr.Handle(v.LocalMethod, v.LocalPath, func(ctx *gin.Context) {
+			forwardedReq, err := http.NewRequest(v.RemoteMethod, v.RemotePath, ctx.Request.Body)
 
 			client := http.DefaultClient
 
 			resp, err := client.Do(forwardedReq)
 			if err != nil {
-				rw.WriteHeader(http.StatusInternalServerError)
+				ctx.String(http.StatusInternalServerError, "")
 				return
 			}
 			defer resp.Body.Close()
 			body, err := ioutil.ReadAll(resp.Body)
 			if err != nil {
-				rw.WriteHeader(http.StatusInternalServerError)
+				ctx.String(http.StatusInternalServerError, "")
 				return
 			}
-
-			rw.WriteHeader(resp.StatusCode)
-			rw.Write(body)
+			ctx.String(resp.StatusCode, string(body))
 		})
 	}
 
 	logrus.Infof("binding to %s:%d", conf.Network.BindInterface, conf.Network.BindPort)
-	if err := http.ListenAndServe(fmt.Sprintf("%s:%d", conf.Network.BindInterface, conf.Network.BindPort), mux); err != nil {
+	if err := svr.Run(fmt.Sprintf("%s:%d", conf.Network.BindInterface, conf.Network.BindPort)); err != nil {
 		logrus.Infof("error while serving: %v", err)
 	}
 }
