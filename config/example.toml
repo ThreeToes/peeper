@@ -2,8 +2,8 @@
 bind_interface = "0.0.0.0"
 bind_port = 9090
 
-[endpoints]
-[endpoints.cats]
+[routes]
+[routes.cats]
 local_path = "/"
 target_path = "https://cat-fact.herokuapp.com/facts"
 local_method = "GET"

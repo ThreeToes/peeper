@@ -1,8 +1,8 @@
 package config
 
 type AppOptions struct {
-	Network   *NetworkConfig      `toml:"network"`
-	Endpoints map[string]Endpoint `toml:"endpoints"`
+	Network   *NetworkConfig       `toml:"network"`
+	Endpoints map[string]*Endpoint `toml:"routes"`
 }
 
 type Endpoint struct {
