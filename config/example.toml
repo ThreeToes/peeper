@@ -8,3 +8,8 @@ local_path = "/"
 target_path = "https://cat-fact.herokuapp.com/facts"
 local_method = "GET"
 remote_method = "GET"
+[routes.dogs]
+local_path = "/"
+target_path = "https://dog-api.kinduff.com/api/facts"
+local_method = "POST"
+remote_method = "GET"

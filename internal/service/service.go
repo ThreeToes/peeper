@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"peeper/internal/config"
+	"peeper/internal/routes"
 )
 
 type Service interface {
@@ -14,12 +15,19 @@ type Service interface {
 }
 
 type NormalService struct {
+	routes  map[string]*routes.Router
 	mux     *http.ServeMux
 	httpSrv *http.Server
 }
 
 func (g *NormalService) RegisterEndpoint(e *config.Endpoint) error {
-	g.mux.HandleFunc(e.LocalPath, func(respWriter http.ResponseWriter, req *http.Request) {
+	if _, ok := g.routes[e.LocalPath]; !ok {
+		router := routes.NewRouter()
+		g.routes[e.LocalPath] = router
+		g.mux.HandleFunc(e.LocalPath, router.ServeHTTP)
+	}
+
+	return g.routes[e.LocalPath].RegisterRoute(e.LocalMethod, func(respWriter http.ResponseWriter, req *http.Request) {
 		forwardedReq, err := http.NewRequest(e.RemoteMethod, e.RemotePath, req.Body)
 
 		client := http.DefaultClient
@@ -38,7 +46,6 @@ func (g *NormalService) RegisterEndpoint(e *config.Endpoint) error {
 		respWriter.WriteHeader(resp.StatusCode)
 		_, err = respWriter.Write(body)
 	})
-	return nil
 }
 
 func (g *NormalService) Start() error {
@@ -52,7 +59,8 @@ func (g *NormalService) Stop() error {
 func New(addr string) Service {
 	mux := http.NewServeMux()
 	g := &NormalService{
-		mux: mux,
+		mux:    mux,
+		routes: map[string]*routes.Router{},
 		httpSrv: &http.Server{
 			Addr:    addr,
 			Handler: mux,
