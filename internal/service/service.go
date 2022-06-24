@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"github.com/gin-gonic/gin"
 	"io/ioutil"
 	"net/http"
 	"peeper/internal/config"
@@ -14,50 +13,49 @@ type Service interface {
 	Stop() error
 }
 
-type GinService struct {
-	engine  *gin.Engine
+type NormalService struct {
+	mux     *http.ServeMux
 	httpSrv *http.Server
 }
 
-func (g *GinService) RegisterEndpoint(e *config.Endpoint) error {
-	g.engine.Handle(e.LocalMethod, e.LocalPath, func(ctx *gin.Context) {
-		forwardedReq, err := http.NewRequest(e.RemoteMethod, e.RemotePath, ctx.Request.Body)
+func (g *NormalService) RegisterEndpoint(e *config.Endpoint) error {
+	g.mux.HandleFunc(e.LocalPath, func(respWriter http.ResponseWriter, req *http.Request) {
+		forwardedReq, err := http.NewRequest(e.RemoteMethod, e.RemotePath, req.Body)
 
 		client := http.DefaultClient
 
 		resp, err := client.Do(forwardedReq)
 		if err != nil {
-			ctx.String(http.StatusInternalServerError, "")
+			respWriter.WriteHeader(http.StatusInternalServerError)
 			return
 		}
 		defer resp.Body.Close()
 		body, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
-			ctx.String(http.StatusInternalServerError, "")
+			respWriter.WriteHeader(http.StatusInternalServerError)
 			return
 		}
-		ctx.String(resp.StatusCode, string(body))
+		respWriter.WriteHeader(resp.StatusCode)
+		_, err = respWriter.Write(body)
 	})
 	return nil
 }
 
-func (g *GinService) Start() error {
+func (g *NormalService) Start() error {
 	return g.httpSrv.ListenAndServe()
 }
 
-func (g *GinService) Stop() error {
+func (g *NormalService) Stop() error {
 	return g.httpSrv.Shutdown(context.Background())
 }
 
 func New(addr string) Service {
-	gin.SetMode(gin.ReleaseMode)
-	eng := gin.New()
-	eng.Use(gin.Recovery())
-	g := &GinService{
-		engine: eng,
+	mux := http.NewServeMux()
+	g := &NormalService{
+		mux: mux,
 		httpSrv: &http.Server{
 			Addr:    addr,
-			Handler: eng,
+			Handler: mux,
 		},
 	}
 

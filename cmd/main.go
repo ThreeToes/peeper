@@ -3,12 +3,10 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"peeper/internal/config"
-	"peeper/internal/service"
-
 	"github.com/BurntSushi/toml"
 	"github.com/sirupsen/logrus"
+	"peeper/internal/config"
+	"peeper/internal/service"
 )
 
 type opts struct {
@@ -44,8 +42,6 @@ func main() {
 	if err != nil {
 		logrus.Fatalf("could not decode config file: %v", err)
 	}
-
-	gin.SetMode(gin.ReleaseMode)
 
 	svr := service.New(fmt.Sprintf("%s:%d", conf.Network.BindInterface, conf.Network.BindPort))
 
