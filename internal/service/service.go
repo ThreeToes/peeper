@@ -2,8 +2,8 @@ package service
 
 import (
 	"context"
-	"io/ioutil"
 	"net/http"
+	"peeper/internal/auth"
 	"peeper/internal/config"
 	"peeper/internal/routes"
 )
@@ -26,26 +26,13 @@ func (g *NormalService) RegisterEndpoint(e *config.Endpoint) error {
 		g.routes[e.LocalPath] = router
 		g.mux.HandleFunc(e.LocalPath, router.ServeHTTP)
 	}
-
-	return g.routes[e.LocalPath].RegisterRoute(e.LocalMethod, func(respWriter http.ResponseWriter, req *http.Request) {
-		forwardedReq, err := http.NewRequest(e.RemoteMethod, e.RemotePath, req.Body)
-
-		client := http.DefaultClient
-
-		resp, err := client.Do(forwardedReq)
+	if e.BasicAuth != nil && e.BasicAuth.Username != "" {
+		err := g.routes[e.LocalPath].RegisterCredentials(e.LocalMethod, auth.NewBasicAuth(e.BasicAuth.Username, e.BasicAuth.Password))
 		if err != nil {
-			respWriter.WriteHeader(http.StatusInternalServerError)
-			return
+			return err
 		}
-		defer resp.Body.Close()
-		body, err := ioutil.ReadAll(resp.Body)
-		if err != nil {
-			respWriter.WriteHeader(http.StatusInternalServerError)
-			return
-		}
-		respWriter.WriteHeader(resp.StatusCode)
-		_, err = respWriter.Write(body)
-	})
+	}
+	return g.routes[e.LocalPath].RegisterRoute(e.LocalMethod, e.RemotePath, e.RemoteMethod)
 }
 
 func (g *NormalService) Start() error {

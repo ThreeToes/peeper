@@ -1,8 +1,10 @@
 package routes
 
 import (
+	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"peeper/internal/auth"
 	"reflect"
 	"testing"
 
@@ -16,7 +18,10 @@ func TestNewRouter(t *testing.T) {
 	}{
 		{
 			name: "create new",
-			want: &Router{methodHandlers: map[string]func(w http.ResponseWriter, request *http.Request){}},
+			want: &Router{
+				methodHandlers: map[string]func(w http.ResponseWriter, request *http.Request){},
+				credentials:    map[string]auth.CredentialInjector{},
+			},
 		},
 	}
 	for _, tt := range tests {
@@ -29,13 +34,14 @@ func TestNewRouter(t *testing.T) {
 }
 
 func TestRouter_RegisterRoute(t *testing.T) {
-	handler := func(w http.ResponseWriter, req *http.Request) {}
 	type fields struct {
 		methodHandlers map[string]func(w http.ResponseWriter, request *http.Request)
+		credentials    map[string]auth.CredentialInjector
 	}
 	type args struct {
-		method  string
-		handler func(w http.ResponseWriter, req *http.Request)
+		localMethod  string
+		remotePath   string
+		remoteMethod string
 	}
 	tests := []struct {
 		name    string
@@ -47,10 +53,12 @@ func TestRouter_RegisterRoute(t *testing.T) {
 			name: "add success",
 			fields: fields{
 				methodHandlers: map[string]func(w http.ResponseWriter, request *http.Request){},
+				credentials:    map[string]auth.CredentialInjector{},
 			},
 			args: args{
-				method:  "GET",
-				handler: handler,
+				localMethod:  "GET",
+				remotePath:   "/",
+				remoteMethod: "GET",
 			},
 			wantErr: false,
 		},
@@ -58,12 +66,14 @@ func TestRouter_RegisterRoute(t *testing.T) {
 			name: "duplicate route",
 			fields: fields{
 				methodHandlers: map[string]func(w http.ResponseWriter, request *http.Request){
-					"GET": handler,
+					"GET": func(w http.ResponseWriter, request *http.Request) {},
 				},
+				credentials: map[string]auth.CredentialInjector{},
 			},
 			args: args{
-				method:  "GET",
-				handler: handler,
+				localMethod:  "GET",
+				remotePath:   "/",
+				remoteMethod: "GET",
 			},
 			wantErr: true,
 		},
@@ -71,12 +81,14 @@ func TestRouter_RegisterRoute(t *testing.T) {
 			name: "route with different method",
 			fields: fields{
 				methodHandlers: map[string]func(w http.ResponseWriter, request *http.Request){
-					"POST": handler,
+					"POST": func(w http.ResponseWriter, request *http.Request) {},
 				},
+				credentials: map[string]auth.CredentialInjector{},
 			},
 			args: args{
-				method:  "GET",
-				handler: handler,
+				localMethod:  "GET",
+				remotePath:   "/",
+				remoteMethod: "GET",
 			},
 			wantErr: false,
 		},
@@ -85,8 +97,9 @@ func TestRouter_RegisterRoute(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			r := &Router{
 				methodHandlers: tt.fields.methodHandlers,
+				credentials:    tt.fields.credentials,
 			}
-			if err := r.RegisterRoute(tt.args.method, tt.args.handler); (err != nil) != tt.wantErr {
+			if err := r.RegisterRoute(tt.args.localMethod, tt.args.remotePath, tt.args.remoteMethod); (err != nil) != tt.wantErr {
 				t.Errorf("RegisterRoute() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
@@ -157,6 +170,59 @@ func TestRouter_ServeHTTP(t *testing.T) {
 			r.ServeHTTP(tt.args.writer, tt.args.request)
 			assert.Equal(t, tt.expectedGet, getCalled)
 			assert.Equal(t, tt.expectedPost, postCalled)
+		})
+	}
+}
+
+func TestRouter_RegisterCredentials(t *testing.T) {
+	type fields struct {
+		methodHandlers map[string]func(w http.ResponseWriter, request *http.Request)
+		credentials    map[string]auth.CredentialInjector
+	}
+	type args struct {
+		method   string
+		injector auth.CredentialInjector
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantErr assert.ErrorAssertionFunc
+	}{
+		{
+			name: "normal",
+			fields: fields{
+				methodHandlers: map[string]func(w http.ResponseWriter, request *http.Request){},
+				credentials:    map[string]auth.CredentialInjector{},
+			},
+			args: args{
+				method:   "GET",
+				injector: &auth.BasicAuth{},
+			},
+			wantErr: assert.NoError,
+		},
+		{
+			name: "duplicate",
+			fields: fields{
+				methodHandlers: map[string]func(w http.ResponseWriter, request *http.Request){},
+				credentials: map[string]auth.CredentialInjector{
+					"GET": &auth.BasicAuth{},
+				},
+			},
+			args: args{
+				method:   "GET",
+				injector: &auth.BasicAuth{},
+			},
+			wantErr: assert.Error,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := &Router{
+				methodHandlers: tt.fields.methodHandlers,
+				credentials:    tt.fields.credentials,
+			}
+			tt.wantErr(t, r.RegisterCredentials(tt.args.method, tt.args.injector), fmt.Sprintf("RegisterCredentials(%v, %v)", tt.args.method, tt.args.injector))
 		})
 	}
 }
