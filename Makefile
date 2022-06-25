@@ -6,8 +6,11 @@ build: vendor test
 vendor:
 	go mod vendor
 
-test:
+test: vendor generate
 	go test -cover ./...
 
 build-docker:
 	docker build -t peeper:latest .
+
+generate:
+	go generate ./...
