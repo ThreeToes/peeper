@@ -3,9 +3,12 @@ package routes
 import (
 	"fmt"
 	"github.com/threetoes/peeper/internal/auth"
+	"io/ioutil"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -225,4 +228,45 @@ func TestRouter_RegisterCredentials(t *testing.T) {
 			tt.wantErr(t, r.RegisterCredentials(tt.args.method, tt.args.injector), fmt.Sprintf("RegisterCredentials(%v, %v)", tt.args.method, tt.args.injector))
 		})
 	}
+}
+
+func TestRegisteredRoutes(t *testing.T) {
+	route := NewRouter()
+	err := route.RegisterRoute(http.MethodPost, "http://localhost:9091/test", http.MethodPost)
+	if !assert.NoError(t, err) {
+		t.FailNow()
+	}
+	route.RegisterCredentials(http.MethodPost, auth.NewBasicAuth("username", "password"))
+	testSvc := httptest.NewUnstartedServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
+		if !assert.Equal(t, http.MethodPost, request.Method) {
+			writer.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		username, password, ok := request.BasicAuth()
+		if !assert.True(t, ok) {
+			writer.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		if !assert.Equal(t, "username", username) || !assert.Equal(t, "password", password) {
+			writer.WriteHeader(http.StatusForbidden)
+			return
+		}
+		writer.WriteHeader(http.StatusOK)
+		writer.Write([]byte("test success"))
+	}))
+	testSvc.Listener.Close()
+	l, err := net.Listen("tcp", ":9091")
+	if err != nil {
+		t.Errorf("couldn't start listener")
+		t.FailNow()
+	}
+	testSvc.Listener = l
+	testSvc.Start()
+	defer testSvc.Close()
+	rw := httptest.NewRecorder()
+	req := httptest.NewRequest(http.MethodPost, "/test", strings.NewReader("testbody"))
+	route.ServeHTTP(rw, req)
+	assert.Equal(t, 200, rw.Code)
+	body, _ := ioutil.ReadAll(rw.Body)
+	assert.Equal(t, "test success", string(body))
 }
