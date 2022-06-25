@@ -2,9 +2,9 @@ package routes
 
 import (
 	"fmt"
+	"github.com/threetoes/peeper/internal/auth"
 	"net/http"
 	"net/http/httptest"
-	"peeper/internal/auth"
 	"reflect"
 	"testing"
 

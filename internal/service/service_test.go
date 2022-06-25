@@ -2,11 +2,11 @@ package service
 
 import (
 	"github.com/stretchr/testify/assert"
+	"github.com/threetoes/peeper/internal/config"
 	"io/ioutil"
 	"net"
 	"net/http"
 	"net/http/httptest"
-	"peeper/internal/config"
 	"testing"
 	"time"
 )

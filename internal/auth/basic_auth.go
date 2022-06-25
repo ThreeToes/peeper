@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"github.com/sirupsen/logrus"
 	"net/http"
 )
 
@@ -11,10 +10,6 @@ type BasicAuth struct {
 }
 
 func (b *BasicAuth) InjectCredentials(req *http.Request) error {
-	// TODO: Do something to handle this
-	logrus.Errorf("aaaaaaaaaaaaa")
-	// TODO: Do something to handle this
-	logrus.Errorf("bbbbbbbbbbb")
 	req.SetBasicAuth(b.username, b.password)
 	return nil
 }

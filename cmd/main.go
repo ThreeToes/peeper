@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"github.com/BurntSushi/toml"
 	"github.com/sirupsen/logrus"
-	"peeper/internal/config"
-	"peeper/internal/service"
+	"github.com/threetoes/peeper/internal/config"
+	"github.com/threetoes/peeper/internal/service"
 )
 
 type opts struct {

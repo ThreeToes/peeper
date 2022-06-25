@@ -2,10 +2,10 @@ package service
 
 import (
 	"context"
+	"github.com/threetoes/peeper/internal/auth"
+	"github.com/threetoes/peeper/internal/config"
+	"github.com/threetoes/peeper/internal/routes"
 	"net/http"
-	"peeper/internal/auth"
-	"peeper/internal/config"
-	"peeper/internal/routes"
 )
 
 type Service interface {

@@ -1,4 +1,4 @@
-module peeper
+module github.com/threetoes/peeper
 
 go 1.18
 

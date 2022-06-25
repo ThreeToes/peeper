@@ -2,9 +2,9 @@ package routes
 
 import (
 	"fmt"
+	"github.com/threetoes/peeper/internal/auth"
 	"io/ioutil"
 	"net/http"
-	"peeper/internal/auth"
 )
 
 type Router struct {
