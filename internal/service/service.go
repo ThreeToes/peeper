@@ -31,6 +31,13 @@ func (g *NormalService) RegisterEndpoint(e *config.Endpoint) error {
 		if err != nil {
 			return err
 		}
+	} else if e.OAuthConfig != nil {
+		conf := e.OAuthConfig
+		injector := auth.NewOAuthInjector(conf.TokenEndpoint, conf.ClientId, conf.ClientSecret, conf.ExtraFormValues)
+		err := g.routes[e.LocalPath].RegisterCredentials(e.LocalMethod, injector)
+		if err != nil {
+			return err
+		}
 	}
 	return g.routes[e.LocalPath].RegisterRoute(e.LocalMethod, e.RemotePath, e.RemoteMethod)
 }

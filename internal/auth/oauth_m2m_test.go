@@ -12,9 +12,9 @@ import (
 func TestOAuthM2MCredentialInjector_InjectCredentials(t *testing.T) {
 	t.Run("get token success", func(t *testing.T) {
 		o := &OAuthM2MCredentialInjector{
-			clientId:     "fakeId",
-			clientSecret: "fakeSecret",
-			oauthAddress: "http://localhost:9092/oauth",
+			clientId:      "fakeId",
+			clientSecret:  "fakeSecret",
+			tokenEndpoint: "http://localhost:9092/oauth/token",
 			extraFormValues: map[string]string{
 				"test-extra": "extra value",
 			},
@@ -94,9 +94,9 @@ func TestOAuthM2MCredentialInjector_InjectCredentials(t *testing.T) {
 	})
 	t.Run("get token failure", func(t *testing.T) {
 		o := &OAuthM2MCredentialInjector{
-			clientId:     "fakeId",
-			clientSecret: "fakeSecret",
-			oauthAddress: "http://localhost:9092/oauth",
+			clientId:      "fakeId",
+			clientSecret:  "fakeSecret",
+			tokenEndpoint: "http://localhost:9092/oauth/token",
 			extraFormValues: map[string]string{
 				"test-extra": "extra value",
 			},

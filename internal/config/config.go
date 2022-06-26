@@ -11,6 +11,7 @@ type Endpoint struct {
 	LocalMethod  string           `toml:"local_method"`
 	RemoteMethod string           `toml:"remote_method"`
 	BasicAuth    *BasicAuthConfig `toml:"basic_auth""`
+	OAuthConfig  *OAuthConfig     `toml:"oauth_config"`
 }
 
 type NetworkConfig struct {

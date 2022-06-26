@@ -17,10 +17,12 @@ type token struct {
 	TokenType   string `json:"token_type"`
 }
 
+// OAuthM2MCredentialInjector injects bearer tokens into the forwarded request. Only supports the client_credentials
+// workflow
 type OAuthM2MCredentialInjector struct {
 	clientId        string
 	clientSecret    string
-	oauthAddress    string
+	tokenEndpoint   string
 	extraFormValues map[string]string
 }
 
@@ -39,9 +41,8 @@ func (o *OAuthM2MCredentialInjector) InjectCredentials(req *http.Request) error 
 }
 
 func (o *OAuthM2MCredentialInjector) getToken(extraFormValues map[string]string) (*token, error) {
-	authPath := fmt.Sprintf("%s/token", o.oauthAddress)
 	client := http.DefaultClient
-	req, err := http.NewRequest(http.MethodPost, authPath, nil)
+	req, err := http.NewRequest(http.MethodPost, o.tokenEndpoint, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -74,4 +75,13 @@ func (o *OAuthM2MCredentialInjector) getToken(extraFormValues map[string]string)
 	}
 
 	return &tok, nil
+}
+
+func NewOAuthInjector(tokenEndpoint, clientId, clientSecret string, extraFormValues map[string]string) *OAuthM2MCredentialInjector {
+	return &OAuthM2MCredentialInjector{
+		clientId:        clientId,
+		clientSecret:    clientSecret,
+		tokenEndpoint:   tokenEndpoint,
+		extraFormValues: extraFormValues,
+	}
 }
