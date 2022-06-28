@@ -14,3 +14,8 @@ type OAuthConfig struct {
 	TokenEndpoint   string            `toml:"token_endpoint"`
 	ExtraFormValues map[string]string `toml:"extra_form_values"`
 }
+
+// StaticKeyAuthConfig configures a collection of key value header pairs
+type StaticKeyAuthConfig struct {
+	Headers map[string]string `toml:"headers"`
+}

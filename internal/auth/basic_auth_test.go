@@ -7,10 +7,7 @@ import (
 )
 
 func TestBasicAuth_InjectCredentials(t *testing.T) {
-	b := &BasicAuth{
-		username: "bigbos_1964",
-		password: "sn@ke3ateR",
-	}
+	b := NewBasicAuth("bigbos_1964", "sn@ke3ateR")
 	req := httptest.NewRequest("POST", "/test", nil)
 	err := b.InjectCredentials(req)
 	assert.NoError(t, err)
