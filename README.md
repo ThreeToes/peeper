@@ -1,7 +1,29 @@
 # peeper - a transparent HTTP proxy
 
+Made as an experiment to see if I could simplify some backend
+services' auth code by centralising it into its own service. I don't
+know how much of a security hole this could be, so use at your own
+risk and sensibly with sealed secrets and the like.
+
 ## Building
 Run `make`
+
+## Running
+Use the `-config` parameter to pass in a TOML config file, for example
+```shell
+$ peeper -config ./config/example.toml
+```
+
+The `-logformat json` parameter can also be used to put logs into JSON
+format
+
+## Making use of it
+Simply hit the configured endpoints like a normal, unauthenticated
+endpoint:
+
+```shell
+$ curl localhost:9090/cats
+```
 
 ## Configuring
 Configuration is done via a TOML configuration file. See 
