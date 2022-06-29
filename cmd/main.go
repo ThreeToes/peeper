@@ -7,6 +7,7 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/threetoes/peeper/internal/config"
 	"github.com/threetoes/peeper/internal/service"
+	"sort"
 )
 
 type opts struct {
@@ -19,6 +20,22 @@ func (o *opts) verify() error {
 		return fmt.Errorf("config file must be set")
 	}
 	return nil
+}
+
+type endpointSorter []*config.Endpoint
+
+func (e endpointSorter) Len() int {
+	return len(e)
+}
+
+func (e endpointSorter) Less(i, j int) bool {
+	return len(e[i].LocalPath) > len(e[j].LocalPath)
+}
+
+func (e endpointSorter) Swap(i, j int) {
+	tmp := e[i]
+	e[i] = e[j]
+	e[j] = tmp
 }
 
 func main() {
@@ -45,9 +62,17 @@ func main() {
 
 	svr := service.New(fmt.Sprintf("%s:%d", conf.Network.BindInterface, conf.Network.BindPort))
 
+	sorter := endpointSorter{}
+
 	for _, v := range conf.Endpoints {
-		logrus.Infof("Mapping local endpoint %s to remote endpoint %s", v.LocalPath, v.RemotePath)
-		svr.RegisterEndpoint(v)
+		sorter = append(sorter, v)
+	}
+
+	sort.Sort(sorter)
+
+	for _, e := range sorter {
+		logrus.Infof("Mapping local endpoint %s to remote endpoint %s", e.LocalPath, e.RemotePath)
+		svr.RegisterEndpoint(e)
 	}
 
 	logrus.Infof("binding to %s:%d", conf.Network.BindInterface, conf.Network.BindPort)
