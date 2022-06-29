@@ -75,6 +75,11 @@ func TestBasicAuthEndpoint(t *testing.T) {
 	})
 	testSvc := httptest.NewUnstartedServer(http.HandlerFunc(func(writer http.ResponseWriter, request *http.Request) {
 		username, password, ok := request.BasicAuth()
+		if !assert.Equal(t, "test value", request.Header.Get("test-header")) {
+			writer.WriteHeader(http.StatusBadRequest)
+			writer.Write([]byte("didn't forward headers"))
+			return
+		}
 		if !assert.True(t, ok) {
 			writer.WriteHeader(http.StatusUnauthorized)
 			writer.Write([]byte("basic auth returned an error"))
@@ -114,7 +119,15 @@ func TestBasicAuthEndpoint(t *testing.T) {
 	// give the server a couple of seconds to come up
 	time.Sleep(2 * time.Second)
 	client := &http.Client{}
-	resp, err := client.Get("http://localhost:9090/testpath")
+	req, err := http.NewRequest("GET", "http://localhost:9090/testpath", nil)
+	if !assert.NoError(t, err) {
+		t.FailNow()
+	}
+
+	// Make sure headers are forwarded correctly
+	req.Header.Set("test-header", "test value")
+
+	resp, err := client.Do(req)
 	assert.NoError(t, err)
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 	body, err := ioutil.ReadAll(resp.Body)

@@ -38,6 +38,12 @@ func (g *NormalService) RegisterEndpoint(e *config.Endpoint) error {
 		if err != nil {
 			return err
 		}
+	} else if e.StaticKeyAuth != nil {
+		conf := e.StaticKeyAuth
+		injector := auth.NewStaticKeyInjector(conf.Headers)
+		if err := g.routes[e.LocalPath].RegisterCredentials(e.LocalMethod, injector); err != nil {
+			return err
+		}
 	}
 	return g.routes[e.LocalPath].RegisterRoute(e.LocalMethod, e.RemotePath, e.RemoteMethod)
 }

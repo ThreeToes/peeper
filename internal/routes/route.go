@@ -27,6 +27,11 @@ func (r *Router) RegisterRoute(localMethod, remotePath, remoteMethod string) err
 	}
 	r.methodHandlers[localMethod] = func(rw http.ResponseWriter, req *http.Request) {
 		forwardedReq, err := http.NewRequest(remoteMethod, remotePath, req.Body)
+		for headerKeys, headerVals := range req.Header {
+			for _, val := range headerVals {
+				forwardedReq.Header.Set(headerKeys, val)
+			}
+		}
 		if err != nil {
 			rw.WriteHeader(http.StatusInternalServerError)
 			return
