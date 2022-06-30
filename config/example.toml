@@ -5,11 +5,11 @@ bind_port = 9090
 [endpoints]
 [endpoints.cats]
 local_path = "/cats"
-target_path = "https://cat-fact.herokuapp.com/facts"
+remote_path = "https://cat-fact.herokuapp.com/facts"
 local_method = "GET"
 remote_method = "GET"
 [endpoints.dogs]
 local_path = "/dogs"
-target_path = "https://dog-api.kinduff.com/api/facts"
+remote_path = "https://dog-api.kinduff.com/api/facts"
 local_method = "POST"
 remote_method = "GET"

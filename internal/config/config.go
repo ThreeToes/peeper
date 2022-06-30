@@ -7,7 +7,7 @@ type AppOptions struct {
 
 type Endpoint struct {
 	LocalPath     string               `toml:"local_path"`
-	RemotePath    string               `toml:"target_path"`
+	RemotePath    string               `toml:"remote_path"`
 	LocalMethod   string               `toml:"local_method"`
 	RemoteMethod  string               `toml:"remote_method"`
 	BasicAuth     *BasicAuthConfig     `toml:"basic_auth"`
