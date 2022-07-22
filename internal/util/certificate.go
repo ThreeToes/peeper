@@ -9,7 +9,7 @@ import (
 
 func LoadCertificate(certString string) (tls.Certificate, error) {
 	var certPEMBlock []byte
-	certPEMBlock, err := GetCertBytes(certString, certPEMBlock)
+	certPEMBlock, err := GetCertBytes(certString)
 	if err != nil {
 		return tls.Certificate{}, err
 	}
@@ -28,11 +28,8 @@ func LoadCertificate(certString string) (tls.Certificate, error) {
 }
 
 func GetCertBytes(certString string) ([]byte, error) {
-	if _, err := os.Stat(certString); err != nil {
-		certPEMBlock, err := ioutil.ReadFile(certString)
-		return certPEMBlock, err
-	} else {
+	if _, err := os.Stat(certString); os.IsNotExist(err) {
 		return []byte(certString), nil
 	}
-	return []byte(certString), nil
+	return ioutil.ReadFile(certString)
 }
