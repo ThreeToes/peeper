@@ -13,6 +13,7 @@ type Endpoint struct {
 	BasicAuth     *BasicAuthConfig     `toml:"basic_auth"`
 	OAuthConfig   *OAuthConfig         `toml:"oauth"`
 	StaticKeyAuth *StaticKeyAuthConfig `toml:"static_key"`
+	HttpConfig    *HttpConfig          `toml:"http_config"`
 }
 
 type NetworkConfig struct {
