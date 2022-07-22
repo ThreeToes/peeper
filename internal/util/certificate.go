@@ -5,6 +5,7 @@ import (
 	"encoding/pem"
 	"io/ioutil"
 	"os"
+	"strings"
 )
 
 func LoadCertificate(certString string) (tls.Certificate, error) {
@@ -28,7 +29,7 @@ func LoadCertificate(certString string) (tls.Certificate, error) {
 }
 
 func GetCertBytes(certString string) ([]byte, error) {
-	if _, err := os.Stat(certString); os.IsNotExist(err) {
+	if _, err := os.Stat(certString); os.IsNotExist(err) || strings.Contains(err.Error(), "file name too long") {
 		return []byte(certString), nil
 	}
 	return ioutil.ReadFile(certString)
